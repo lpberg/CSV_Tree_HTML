@@ -26,16 +26,13 @@ def read_tree(rows, levelnames):
     old_level = 0
     stack = [root]
     for i, row in enumerate(rows, 1):
-
         new_level = column_index(row)
         node = Node(row[new_level], levelnames[new_level])
-
         if new_level == old_level:
             stack[-1].append(node)
         elif new_level > old_level:
             if new_level - old_level != 1:
                 raise ValueError
-
             stack.append(stack[-1].children[-1])
             stack[-1].append(node)
             old_level = new_level
@@ -46,22 +43,14 @@ def read_tree(rows, levelnames):
             stack[-1].append(node)
     return root
 
-def dfs(node):
-    if node.children:
-        outfile.write('''<div class="borderOn lvl'''+node.level+'''" data-toggle="collapse" data-target="#'''+node.name+node.level+'''">'''+node.name+'''</div>
-                      <div style="margin-left:15px" id="'''+node.name+node.level+'''" class="collapse">''')
-        for child in node.children:
-            dfs(child)
-        outfile.write("</div>")
-    else: 
-        outfile.write('''<div class="borderOn lvl'''+node.level+'''">'''+node.name+'''</div>''')
+def getNodeStringWithChildren(level,name):
+    return '''<div class="borderOn lvl'''+level+'''" data-toggle="collapse" data-target="#'''+name+level+'''">'''+name+'''</div>
+                      <div style="margin-left:15px" id="'''+name+level+'''" class="collapse">'''
+def getNodeStringWithoutChildren(level,name):
+    return '''<div class="borderOn lvl'''+level+'''">'''+name+'''</div>'''
 
-    
-outfile = open("./test.html",'w')
-
-def main():
-    colors = ["#4c4cc9","#6666d0","#7f7fd8","#9999e0","#b2b2e7","#ccccef","#e5e5f7","#ffffff"]
-    outfile.write('''<!DOCTYPE html>
+def getIntroCode(colors):
+     return '''<!DOCTYPE html>
         <html>
         <head>
           <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -69,28 +58,61 @@ def main():
           <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
           <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js"></script>
           <style>
-              div { margin: 0; padding: 0; margin-bottom:10px;}
-              body {color:white;}
-              .borderOn {border-style: solid; border-color:gray; border-width:thin;}
-              .lvl1 {border-style: solid; background-color:'''+colors[0]+''';}
-              .lvl2 {border-style: solid; background-color:'''+colors[1]+''';}
-              .lvl3 {border-style: solid; background-color:'''+colors[2]+''';}
-              .lvl4 {border-style: solid; background-color:'''+colors[3]+''';}
-              .lvl5 {border-style: solid; background-color:'''+colors[4]+''';}
-              .lvl6 {border-style: solid; background-color:'''+colors[5]+''';}
+              div.lvl1:before, 
+              div.lvl2:before,
+              div.lvl3:before,
+              div.lvl4:before,
+              div.lvl5:before {
+                  content: "";
+                  display: inline-block;
+                  width: 15px;
+                  height: 15px;
+                  margin-right: 5px;
+                }
+                div.lvl1:before {
+                  background: '''+colors[0]+''';
+                }
+                div.lvl2:before {
+                  background: '''+colors[1]+''';
+                }
+                div.lvl3:before {
+                  background: '''+colors[2]+''';
+                }
+                div.lvl4:before {
+                  background: '''+colors[3]+''';
+                }
+                div.lvl5:before {
+                  background: '''+colors[4]+''';
+                }
           </style>
         </head>
         <body>
-        ''')
-    infile = "./tree.csv"
+        '''
+        
+def getClosingCode():
+    return '''</body></html>'''
+
+def traverseTreeDFS(node,outfile):
+    if node.children:
+        outfile.write(getNodeStringWithChildren(node.level,node.name))
+        for child in node.children:
+            traverseTreeDFS(child,outfile)
+        outfile.write("</div>")
+    else: 
+        outfile.write(getNodeStringWithoutChildren(node.level,node.name))
+
+def main(infile,outfile):
+    colors = ["Red","Green","Blue","Orange","Black"]
+    outfile = open(outfile,'w')
+    outfile.write(getIntroCode(colors))
     with open(infile) as f:
         rows = csv.reader(f)
         levelnames = next(rows) # skip header
         tree = read_tree(rows, levelnames)
         for node in tree.children:
-            dfs(node)
-        outfile.write('''</body></html>''')
+            traverseTreeDFS(node,outfile)
+        outfile.write(getClosingCode())
         outfile.close()
 
 if __name__ == "__main__":
-    main()
+    main("./tree.csv","./test.html")
